@@ -1,0 +1,158 @@
+<!--
+Author: Michael Bopp
+Filename: sp.html
+Created: 4/19/23
+Changed: 4/23/23
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SandPiles</title>
+
+    <style>
+       .grid {
+        display: grid;
+        grid-template-columns: repeat(120, 1fr);
+        grid-template-rows: repeat(120, 1fr);
+        width: 100%;
+        height: 100%;
+    }
+
+    .grid-item {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Serif;
+        font-weight: bold;
+        font-size: 18px;
+        border: 1px solid black;
+        color: transparent;
+    }
+
+    .floating-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100;
+    }
+
+    /* Add the custom prompt CSS */
+    #custom-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .prompt-box {
+      background-color: rgba(255, 255, 255, 0.8);
+      width: 30vw; /* Set the width to be 30% of the viewport width */
+      max-width: 90%;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+    }
+
+    .prompt-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .prompt-message {
+      margin-bottom: 20px;
+    }
+
+    .prompt-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 1rem;
+    }
+
+    .prompt-button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border-radius: 3px;
+      background-color: #6B7280;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .prompt-button:hover {
+      background-color: #4B5563;
+    }
+
+    /* Add media query for custom-prompt */
+    @media screen and (max-width: 480px) {
+      .prompt-box {
+        width: 90%;
+      }
+    }
+    
+    @media screen and (min-width: 1920px) {
+           .prompt-box {
+               width: 1000px;
+               /* Add any other styles you want to change for 1080p screens */
+      }
+     }
+
+    </style>
+</head>
+
+<body>
+    <div id="custom-prompt">  <!-- Initialize Sand Piles prompt -->
+        <div class="prompt-box">
+            <h2 class="prompt-title">Start Sandpiles</h2>
+            <p class="prompt-message">Enter a value greater than 0.</p>
+            <input type="number" id="centerValueInput" name="centerValueInput" class="prompt-input" placeholder="Enter center value" required>
+        <button type="submit" class="prompt-button" id="generateSandPiles">Generate Sand Piles</button>
+    </div>
+</div>
+
+<div class="grid"></div>
+
+<button id="startButton" style="display: none;">Start Sandpile</button>
+<script src="SPscript.js"></script>
+<script>
+    const generateSandPilesButton = document.getElementById("generateSandPiles");
+    const centerValueInput = document.getElementById("centerValueInput");
+    const customPrompt = document.getElementById("custom-prompt");
+
+    if (generateSandPilesButton && centerValueInput) {
+      generateSandPilesButton.addEventListener("click", () => {
+        const centerValueStr = centerValueInput.value;
+        if (centerValueStr === "") {
+          alert("No value entered. Please enter a value.");
+          return;
+        }
+        const parsedValue = parseInt(centerValueStr, 10);
+        if (!isNaN(parsedValue) && parsedValue > 0) {
+          centerValue = parsedValue;
+          startSandpile();
+
+          // Hide the custom prompt after the input is valid and Sandpile starts
+          customPrompt.style.display = "none";
+        } else {
+          alert("Please enter a valid number greater than 0 for the center value.");
+        }
+      });
+    }
+</script>
+
+</body>
+</html>
