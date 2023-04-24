@@ -1,4 +1,7 @@
 "use strict";
+const sand = "rgb(213, 193, 135)";
+const magenta = "rgb(255, 0, 255)";
+const darkblue = "rgb(0, 0, 255)";
 const PATT1 = [
     "rgb(47, 41, 10)", "rgb(245, 66, 0)", "rgb(249, 168, 29)",
     "rgb(226, 200, 162)", "rgb(134, 142, 93)", "rgb(255, 0, 0)"
@@ -11,6 +14,73 @@ const PATT3 = [
     "rgb(230, 230, 250)", "rgb(75, 0, 130)", "rgb(138, 43, 226)",
     "rgb(255, 0, 255)", "rgb(218, 112, 214)", "rgb(153, 50, 204)"
 ];
+const colorInput1 = document.getElementById("colorInput1");
+const colorInput2 = document.getElementById("colorInput2");
+const colorInput3 = document.getElementById("colorInput3");
+let color2 = colorInput2.value;
+let color1 = colorInput1.value;
+let color3 = colorInput3.value;
+let lastColorChangeTime = 0;
+let hasColorChanged = false;
+colorInput1.addEventListener("input", () => {
+    color1 = colorInput1.value;
+});
+colorInput2.addEventListener("input", () => {
+    color2 = colorInput2.value;
+});
+colorInput3.addEventListener("input", () => {
+    color3 = colorInput3.value;
+});
+let renderRate = 50;
+const adjustRenderRateButton = document.getElementById("adjustRenderRateButton");
+if (adjustRenderRateButton) {
+    adjustRenderRateButton.addEventListener("click", () => {
+        const newRenderRateStr = window.prompt("Enter the new render rate in milliseconds (higher value = slower rendering):");
+        if (newRenderRateStr === null) {
+            alert("No value entered. Please click the button again and enter a value.");
+            return;
+        }
+        const parsedValue = parseInt(newRenderRateStr, 10);
+        if (!isNaN(parsedValue) && parsedValue > 0) {
+            renderRate = parsedValue;
+            let worker = new Worker(workerURL);
+            if (worker) {
+                worker.terminate();
+            }
+            worker = new Worker(workerURL);
+            worker.onmessage = function (event) {
+                var _a;
+                if (!isRendering)
+                    return;
+                if (event.data.grid) {
+                    const gridData = event.data.grid;
+                    for (let x = 0; x < width; x++) {
+                        for (let y = 0; y < height; y++) {
+                            const newPile = gridData[x][y];
+                            const currentPile = parseInt((_a = grid[x][y].textContent) !== null && _a !== void 0 ? _a : "0");
+                            if (newPile !== currentPile) {
+                                hasColorChanged = true;
+                            }
+                            grid[x][y].textContent = newPile;
+                            grid[x][y].style.backgroundColor = getColorForPile(newPile);
+                        }
+                    }
+                    if (hasColorChanged) {
+                        lastColorChangeTime = performance.now();
+                        hasColorChanged = false;
+                    }
+                }
+                if (event.data.executionTimeWorker) {
+                    executionTimeWorker = event.data.executionTimeWorker;
+                }
+            };
+            startSandpile();
+        }
+        else {
+            alert("Please enter a valid number greater than 0 for the render rate.");
+        }
+    });
+}
 const width = 120;
 const height = 120;
 let maxTopple = 10000;
@@ -31,7 +101,8 @@ if (gridContainer) {
 }
 const workerCode = `
 self.onmessage = function(event) {
-  const { width, height, centerValue } = event.data; // Add centerValue here
+  const { width, height, centerValue, renderRate } = event.data;
+  const startTimeWorker = performance.now(); // Record the start time for the worker thread
 
   const grid = Array.from({ length: width }, () => Array(height).fill(0));
 
@@ -52,6 +123,8 @@ self.onmessage = function(event) {
   const interval = setInterval(() => {
     if (!hasPilesToTopple()) {
       clearInterval(interval);
+      const endTimeWorker = performance.now(); // Record end time for worker thread
+      postMessage({ executionTimeWorker: endTimeWorker - startTimeWorker }); // Send the worker's execution time to the main thread
       return;
     }
 
@@ -81,16 +154,29 @@ self.onmessage = function(event) {
       }
     }
 
-    postMessage(grid);
-  }, 50);
+    postMessage({ grid });
+  }, renderRate);
 }
 `;
 const blob = new Blob([workerCode], { type: "text/javascript" });
 const workerURL = URL.createObjectURL(blob);
 const worker = new Worker(workerURL);
 let centerValue = 0;
+let executionTimeMain = 0;
+let isRendering = false;
 function startSandpile() {
-    worker.postMessage({ width, height, maxTopple, centerValue });
+    isRendering = true;
+    const startTimeMain = performance.now();
+    worker.postMessage({ width, height, maxTopple, centerValue, renderRate });
+    const checkRenderCompletion = setInterval(() => {
+        if (executionTimeWorker > 0) {
+            clearInterval(checkRenderCompletion);
+            const endTimeMain = performance.now();
+            executionTimeMain = endTimeMain - startTimeMain;
+            alert(`Main thread rendering time: ${executionTimeMain.toFixed(2)} ms\nWorker thread calculation time: ${executionTimeWorker.toFixed(2)} ms`);
+            isRendering = false;
+        }
+    }, 100);
 }
 const startButton = document.getElementById("startButton");
 if (startButton) {
@@ -110,33 +196,46 @@ if (startButton) {
         }
     });
 }
+function getColorForPile(pile) {
+    switch (pile) {
+        case 0:
+            return sand;
+        case 1:
+            return color1;
+        case 2:
+            return color2;
+        case 3:
+            return color3;
+        case 4:
+            return magenta;
+        default:
+            return darkblue;
+    }
+}
+let executionTimeWorker = 0;
 worker.onmessage = function (event) {
-    const gridData = event.data;
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            const pile = gridData[x][y];
-            switch (pile) {
-                case 0:
-                    grid[x][y].style.backgroundColor = PATT2[4];
-                    break;
-                case 1:
-                    grid[x][y].style.backgroundColor = PATT2[1];
-                    break;
-                case 2:
-                    grid[x][y].style.backgroundColor = PATT2[2];
-                    break;
-                case 3:
-                    grid[x][y].style.backgroundColor = PATT3[1];
-                    break;
-                default:
-                    if (pile === 4) {
-                        grid[x][y].style.backgroundColor = PATT3[3];
-                    }
-                    else if (pile > 4) {
-                        grid[x][y].style.backgroundColor = PATT2[5];
-                    }
-                    break;
+    var _a;
+    if (!isRendering)
+        return;
+    if (event.data.grid) {
+        const gridData = event.data.grid;
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const newPile = gridData[x][y];
+                const currentPile = parseInt((_a = grid[x][y].textContent) !== null && _a !== void 0 ? _a : "0");
+                if (newPile !== currentPile) {
+                    hasColorChanged = true;
+                }
+                grid[x][y].textContent = newPile;
+                grid[x][y].style.backgroundColor = getColorForPile(newPile);
             }
         }
+        if (hasColorChanged) {
+            lastColorChangeTime = performance.now();
+            hasColorChanged = false;
+        }
+    }
+    if (event.data.executionTimeWorker) {
+        executionTimeWorker = event.data.executionTimeWorker;
     }
 };

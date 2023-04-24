@@ -2,8 +2,9 @@
 Author: Michael Bopp
 Filename: sp.html
 Created: 4/19/23
-Changed: 4/23/23
+Changed: 4/24/23
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +13,9 @@ Changed: 4/23/23
     <title>SandPiles</title>
 
     <style>
-       .grid {
+    
+    /* Sandppile Grid CSS */
+    .grid {
         display: grid;
         grid-template-columns: repeat(120, 1fr);
         grid-template-rows: repeat(120, 1fr);
@@ -30,6 +33,10 @@ Changed: 4/23/23
         border: 1px solid black;
         color: transparent;
     }
+    
+    .grid-item.hide-grid-lines {
+        border: none;
+    }
 
     .floating-button {
         position: fixed;
@@ -38,7 +45,7 @@ Changed: 4/23/23
         z-index: 100;
     }
 
-    /* Add the custom prompt CSS */
+    /* Prompt over Sandpiles Grid.*/
     #custom-prompt {
       position: fixed;
       top: 0;
@@ -53,7 +60,7 @@ Changed: 4/23/23
 
     .prompt-box {
       background-color: rgba(255, 255, 255, 0.8);
-      width: 30vw; /* Set the width to be 30% of the viewport width */
+      width: 400px;
       max-width: 90%;
       padding: 20px;
       border-radius: 5px;
@@ -72,12 +79,21 @@ Changed: 4/23/23
     }
 
     .prompt-input {
-      width: 100%;
-      padding: 10px;
+      width: 95%;
+      padding: 8px;
       margin-bottom: 10px;
       border: 1px solid #ccc;
       border-radius: 3px;
-      font-size: 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .color-input {
+      width: 10%;
+      padding: 1px;
+      margin-bottom: 1px;
+      border: 1px solid #ccc;
+      border-radius: 1px;
+      font-size: 0.9rem;
     }
 
     .prompt-button {
@@ -97,7 +113,7 @@ Changed: 4/23/23
       background-color: #4B5563;
     }
 
-    /* Add media query for custom-prompt */
+    /* Media Queries for different devices. */
     @media screen and (max-width: 480px) {
       .prompt-box {
         width: 90%;
@@ -105,11 +121,10 @@ Changed: 4/23/23
     }
     
     @media screen and (min-width: 1920px) {
-           .prompt-box {
-               width: 1000px;
-               /* Add any other styles you want to change for 1080p screens */
+      .prompt-box {
+        width: 600px;
       }
-     }
+    }
 
     </style>
 </head>
@@ -118,9 +133,30 @@ Changed: 4/23/23
     <div id="custom-prompt">  <!-- Initialize Sand Piles prompt -->
         <div class="prompt-box">
             <h2 class="prompt-title">Start Sandpiles</h2>
-            <p class="prompt-message">Enter a value greater than 0.</p>
+            
+            <p class="prompt-message">Something Something</p>
             <input type="number" id="centerValueInput" name="centerValueInput" class="prompt-input" placeholder="Enter center value" required>
-        <button type="submit" class="prompt-button" id="generateSandPiles">Generate Sand Piles</button>
+            
+            <label for="colorInput1">Pile Color 1:</label>
+            <input type="color" id="colorInput1" name="colorInput1" class="color-input" required>
+            
+            <br>
+            <label for="colorInput2">Pile Color 2:</label>
+            <input type="color" id="colorInput2" name="colorInput2" class="color-input" required>
+            
+            <br>
+            <label for="colorInput3">Pile Color 3:</label>
+            <input type="color" id="colorInput3" name="colorInput3" class="color-input" required>
+            
+            <button id="toggleGridButton">Toggle Grid Lines</button>
+            
+            <button id="adjustRenderRateButton">Adjust Render Rate</button>
+            
+            <p>
+            stuff
+            </p>
+
+        <button type="submit" class="prompt-button" id="generateSandPiles">Generate  Sand Piles</button>
     </div>
 </div>
 
@@ -145,7 +181,7 @@ Changed: 4/23/23
           centerValue = parsedValue;
           startSandpile();
 
-          // Hide the custom prompt after the input is valid and Sandpile starts
+          /* Hide custom prompt when calculation starts. */
           customPrompt.style.display = "none";
         } else {
           alert("Please enter a valid number greater than 0 for the center value.");
@@ -155,4 +191,40 @@ Changed: 4/23/23
 </script>
 
 </body>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const numberInput = document.getElementById('centerValueInput');
+    numberInput.addEventListener('input', function (event) {
+      const previousValue = parseFloat(event.target.getAttribute('data-previous-value') || '0');
+      const currentValue = parseFloat(event.target.value);
+
+      /* Center value textbox arrow logic */
+      if (currentValue > previousValue) {
+        event.target.value = previousValue + 1000;
+      } else if (currentValue < previousValue && previousValue > 0) {
+        event.target.value = previousValue - 1000;
+      } else if (currentValue < previousValue && previousValue === 0) {
+        event.target.value = 0;
+      }
+
+      // Save the current value as the previous value for the next event
+      event.target.setAttribute('data-previous-value', event.target.value);
+    });
+  });
+</script>
+
+<script>
+const toggleGridButton = document.getElementById("toggleGridButton");
+if (toggleGridButton) {
+  toggleGridButton.addEventListener("click", () => {
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        grid[x][y].classList.toggle("hide-grid-lines");
+      }
+    }
+  });
+}
+</script>
+
 </html>
